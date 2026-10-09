@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Ghi Nhớ Ma-thi-ơ 2</title>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1e1e2e">
+  <style>
+    :root {
+      --bg: #181825;
+      --card-bg: #1e1e2e;
+      --accent: #89b4fa;
+      --text: #cdd6f4;
+      --text-dim: #a6adc8;
+      --success: #a6e3a1;
+      --border: #313244;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-height: 100vh;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    header { text-align: center; margin-bottom: 16px; }
+    h1 { font-size: 1.25rem; color: var(--accent); margin-bottom: 4px; }
+    .subtitle { font-size: 0.85rem; color: var(--text-dim); }
+
+    .day-selector {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+    .day-selector::-webkit-scrollbar { display: none; }
+    .day-chip {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .day-chip.active {
+      background: var(--accent);
+      color: #11111b;
+      font-weight: bold;
+      border-color: var(--accent);
+    }
+    .day-chip.done::after { content: " ✓"; color: var(--success); font-weight: bold; }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .card-title { font-weight: bold; color: var(--accent); }
+
+    .mode-tabs {
+      display: flex;
+      background: #11111b;
+      border-radius: 8px;
+      padding: 3px;
+      margin-bottom: 12px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 6px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .tab.active { background: var(--card-bg); color: var(--text); font-weight: bold; }
+
+    .content-area {
+      flex: 1;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text);
+      overflow-y: auto;
+      white-space: pre-wrap;
+      padding-right: 4px;
+    }
+
+    .edit-area {
+      width: 100%;
+      height: 120px;
+      background: #11111b;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      margin-top: 8px;
+      resize: none;
+      display: none;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-complete {
+      background: var(--success);
+      color: #11111b;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Học Thuộc Ma-thi-ơ Đoạn 2</h1>
+    <div class="subtitle">Lộ trình 14 ngày • Kỹ thuật Ký tự đầu & Điền khuyết</div>
+  </header>
+
+  <div class="day-selector" id="dayList"></div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title" id="dayTitle">Ngày 1</div>
+      <button class="btn-toggle" style="flex:0; padding:4px 8px; font-size:0.75rem;" onclick="toggleEdit()">Sửa văn bản</button>
+    </div>
+
+    <div class="mode-tabs">
+      <div class="tab active" onclick="setMode('full')">Đầy đủ</div>
+      <div class="tab" onclick="setMode('first_letter')">Chữ cái đầu</div>
+      <div class="tab" onclick="setMode('blanks')">Che từ</div>
+    </div>
+
+    <div class="content-area" id="verseDisplay"></div>
+    <textarea id="editText" class="edit-area" placeholder="Dán văn bản câu Kinh Thánh của ngày vào đây..."></textarea>
+
+    <div class="controls">
+      <button class="btn-complete" id="completeBtn" onclick="toggleDone()">Đánh dấu: Đã thuộc</button>
+    </div>
+  </div>
+
+  <script>
+    // Khung dữ liệu 14 ngày. Người dùng có thể chỉnh sửa văn bản trực tiếp trên app.
+    const defaultData = [
+      { day: 1, range: "Câu 1 - 2", text: "1 Khi Đức Chúa Jêsus đã sanh tại thành Bết-lê-hem, xứ Giu-đê, đang đời vua Hê-rốt, có mấy thầy bác sĩ ở đông phương đến thành Giê-ru-sa-lem,\n2 mà hỏi rằng: Vua dân Giu-đa mới sanh tại đâu? Vì chúng ta đã thấy ngôi sao Ngài bên đông phương, nên đến đặng thờ lạy Ngài." },
+      { day: 2, range: "Câu 3 - 4", text: "3 Nghe tin ấy, vua Hê-rốt cùng cả thành Giê-ru-sa-lem đều bối rối.\n4 Vua bèn nhóm các thầy tế lễ cả và các thầy thông giáo trong dân lại, mà tra hỏi rằng Đấng Christ phải sanh tại đâu." },
+      { day: 3, range: "Câu 5 - 6", text: "5 Các thầy ấy tâu rằng: Tại Bết-lê-hem, xứ Giu-đê; vì có lời đấng tiên tri chép như vầy:\n6 Hỡi Bết-lê-hem, đất Giu-đa! Thật ngươi chẳng kém gì các thành lớn của xứ Giu-đa đâu, vì từ ngươi sẽ ra một quan tướng, là Đấng chăn dân Y-sơ-ra-ên của ta." },
+      { day: 4, range: "Câu 7 - 8", text: "7 Vua Hê-rốt bèn vời mấy thầy bác sĩ cách kín nhiệm, hỏi kỹ càng về ngôi sao đã hiện ra khi nào.\n8 Rồi vua sai mấy thầy đó đến thành Bết-lê-hem, và dặn rằng: Hãy đi hỏi thăm cho kỹ về con trẻ đó; khi tìm được rồi, hãy cho ta biết, đặng ta cũng đến mà thờ lạy Ngài." },
+      { day: 5, range: "Câu 9 - 10", text: "9 Mấy thầy nghe vua phán xong, liền đi. Kìa, ngôi sao mà họ đã thấy bên đông phương, đi trước họ cho đến chừng tới nơi con trẻ ở, mới dừng lại trên đầu.\n10 Mấy thầy thấy ngôi sao, mừng rỡ quá bội." },
+      { day: 6, range: "Câu 11 - 12", text: "11 Khi vào đến nhà, thấy con trẻ cùng Ma-ri, mẹ Ngài, thì sấp mình xuống mà thờ lạy Ngài; rồi mở hộp châu báu ra, dâng cho Ngài những lễ vật, là vàng, nhũ hương, và một dược.\n12 Kế đó, trong chiêm bao họ được Đức Chúa Trời mách bảo đừng trở lại nơi vua Hê-rốt; nên họ đi đường khác mà về xứ mình." },
+      { day: 7, range: "Ôn tập Tuần 1", text: "Ôn lại toàn bộ từ Câu 1 đến Câu 12. Hãy đọc trôi chảy không nhìn tài liệu trước khi bước sang phân đoạn tiếp theo." },
+      { day: 8, range: "Câu 13 - 14", text: "13 Sau khi mấy thầy đó đi rồi, có một thiên sứ của Chúa hiện đến cùng Giô-sép trong chiêm bao, mà truyền rằng: Hãy chờ dậy, đem con trẻ và mẹ Ngài trốn sang xứ Ê-díp-tô, rồi cứ ở đó cho tới chừng nào ta bảo ngươi; vì vua Hê-rốt toan kiếm con trẻ ấy mà giết.\n14 Giô-sép bèn chờ dậy, đem con trẻ và mẹ Ngài đi ban đêm, lánh qua xứ Ê-díp-tô." },
+      { day: 9, range: "Câu 15 - 16", text: "15 Người ở đó cho tới khi vua Hê-rốt băng, đặng cho ứng nghiệm lời Chúa đã phán bởi đấng tiên tri rằng: Ta đã gọi con ta ra khỏi xứ Ê-díp-tô.\n16 Vua Hê-rốt thấy mình đã bị mấy thầy bác sĩ đánh lừa, thì tức giận quá, bèn sai giết hết thảy con trai từ hai tuổi sấp xuống ở thành Bết-lê-hem và cả hạt, theo đúng ngày tháng mà vua đã cẩn thận hỏi các thầy bác sĩ." },
+      { day: 10, range: "Câu 17 - 18", text: "17 Vậy là ứng nghiệm lời đấng tiên tri Giê-rê-mi đã nói rằng:\n18 Người ta có nghe tiếng kêu la, than khóc, thảm sầu tại Ra-ma: Ấy là Ra-chên khóc các con mình, mà không chịu yên ủi, vì chúng nó không còn nữa." },
+      { day: 11, range: "Câu 19 - 20", text: "19 Nhưng sau khi vua Hê-rốt băng, có một thiên sứ của Chúa hiện đến cùng Giô-sép trong chiêm bao, tại xứ Ê-díp-tô, mà truyền rằng:\n20 Hãy chờ dậy, đem con trẻ và mẹ Ngài trở về xứ Y-sơ-ra-ên; vì những kẻ toan giết con trẻ đã chết rồi." },
+      { day: 12, range: "Câu 21 - 23", text: "21 Giô-sép bèn chờ dậy, đem con trẻ và mẹ Ngài trở về xứ Y-sơ-ra-ên.\n22 Song vì nghe vua A-chê-la-u nối ngôi vua cha là Hê-rốt mà trị vì tại xứ Giu-đê, nên Giô-sép sợ không dám về đó; và bởi được Đức Chúa Trời mách bảo trong chiêm bao, người bèn dời qua xứ Ga-li-lê,\n23 đến ngụ tại một thành gọi là Na-xa-rét. Như vậy đặng ứng nghiệm lời các đấng tiên tri đã nói rằng: Người ta sẽ gọi Ngài là người Na-xa-rét." },
+      { day: 13, range: "Ôn tập Tuần 2", text: "Ôn lại toàn bộ từ Câu 13 đến Câu 23. Đọc liền mạch câu chuyện từ lúc lánh sang Ê-díp-tô đến khi về định cư tại Na-xa-rét." },
+      { day: 14, range: "Tổng kết 23 câu", text: "Đọc trọn vẹn cả 23 câu Ma-thi-ơ đoạn 2 liên tục từ đầu đến cuối." }
+    ];
+
+    let currentDayIndex = 0;
+    let currentMode = 'full';
+    let appData = JSON.parse(localStorage.getItem('bible_data')) || defaultData;
+    let completedDays = JSON.parse(localStorage.getItem('bible_done')) || [];
+
+    function saveState() {
+      localStorage.setItem('bible_data', JSON.stringify(appData));
+      localStorage.setItem('bible_done', JSON.stringify(completedDays));
+    }
+
+    function initSelector() {
+      const container = document.getElementById('dayList');
+      container.innerHTML = '';
+      appData.forEach((item, index) => {
+        const btn = document.createElement('div');
+        btn.className = `day-chip ${index === currentDayIndex ? 'active' : ''} ${completedDays.includes(index) ? 'done' : ''}`;
+        btn.textContent = `N${item.day}: ${item.range}`;
+        btn.onclick = () => selectDay(index);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectDay(index) {
+      currentDayIndex = index;
+      document.getElementById('editText').style.display = 'none';
+      document.getElementById('verseDisplay').style.display = 'block';
+      initSelector();
+      renderContent();
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.tab').forEach((el, idx) => {
+        el.classList.toggle('active', (mode === 'full' && idx === 0) || (mode === 'first_letter' && idx === 1) || (mode === 'blanks' && idx === 2));
+      });
+      renderContent();
+    }
+
+    function toFirstLetter(str) {
+      return str.split('\n').map(line => {
+        return line.split(' ').map(word => {
+          if (!word) return '';
+          if (/^\d+$/.test(word)) return word; // Giữ lại số thứ tự câu
+          const firstChar = word.charAt(0);
+          const punctuation = word.slice(1).replace(/[a-zA-ZÀ-ỹ0-9]/g, '');
+          return firstChar + (punctuation || '');
+        }).join(' ');
+      }).join('\n');
+    }
+
+    function toBlanks(str) {
+      let count = 0;
+      return str.split(' ').map(word => {
+        if (/^\d+$/.test(word)) return word;
+        count++;
+        return (count % 2 === 0) ? '_____' : word;
+      }).join(' ');
+    }
+
+    function renderContent() {
+      const item = appData[currentDayIndex];
+      document.getElementById('dayTitle').textContent = `Ngày ${item.day} • ${item.range}`;
+      const display = document.getElementById('verseDisplay');
+
+      if (currentMode === 'full') {
+        display.textContent = item.text;
+      } else if (currentMode === 'first_letter') {
+        display.textContent = toFirstLetter(item.text);
+      } else if (currentMode === 'blanks') {
+        display.textContent = toBlanks(item.text);
+      }
+
+      const completeBtn = document.getElementById('completeBtn');
+      if (completedDays.includes(currentDayIndex)) {
+        completeBtn.textContent = 'Đã thuộc ✓ (Nhấn để hủy)';
+        completeBtn.style.background = '#45475a';
+        completeBtn.style.color = '#cdd6f4';
+      } else {
+        completeBtn.textContent = 'Đánh dấu: Đã thuộc';
+        completeBtn.style.background = 'var(--success)';
+        completeBtn.style.color = '#11111b';
+      }
+    }
+
+    function toggleDone() {
+      const pos = completedDays.indexOf(currentDayIndex);
+      if (pos > -1) {
+        completedDays.splice(pos, 1);
+      } else {
+        completedDays.push(currentDayIndex);
+      }
+      saveState();
+      initSelector();
+      renderContent();
+    }
+
+    function toggleEdit() {
+      const edit = document.getElementById('editText');
+      const display = document.getElementById('verseDisplay');
+      if (edit.style.display === 'block') {
+        appData[currentDayIndex].text = edit.value;
+        saveState();
+        edit.style.display = 'none';
+        display.style.display = 'block';
+        renderContent();
+      } else {
+        edit.value = appData[currentDayIndex].text;
+        edit.style.display = 'block';
+        display.style.display = 'none';
+      }
+    }
+
+    // Khởi chạy ban đầu
+    initSelector();
+    renderContent();
+  </script>
+</body>
+</html>
