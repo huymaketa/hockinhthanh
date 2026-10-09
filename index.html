@@ -16,9 +16,7 @@
       --text: #cdd6f4;
       --dim: #a6adc8;
       --green: #a6e3a1;
-      --green-bg: rgba(166, 227, 161, 0.15);
       --red: #f38ba8;
-      --red-bg: rgba(243, 139, 168, 0.15);
       --border: #313244;
       --input-bg: #181825;
     }
@@ -38,6 +36,7 @@
     }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .streak { font-size: 0.9rem; font-weight: bold; color: #f9e2af; }
+    
     .day-slider {
       display: flex;
       gap: 8px;
@@ -63,6 +62,7 @@
       font-weight: bold;
       border-color: var(--accent);
     }
+
     .progress-bar-wrap {
       width: 100%;
       height: 6px;
@@ -77,16 +77,42 @@
       background: var(--accent);
       transition: width 0.3s ease;
     }
+
     .game-box {
       background: var(--card);
-      border: 1px solid var(--border);
+      border: 2px solid var(--border);
       border-radius: 16px;
       padding: 20px;
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      transition: border-color 0.2s, transform 0.2s;
     }
+
+    /* Hiệu ứng rung lắc khi sai */
+    .shake-anim {
+      animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      border-color: var(--red) !important;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-3px, 0, 0); }
+      20%, 80% { transform: translate3d(5px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+      40%, 60% { transform: translate3d(6px, 0, 0); }
+    }
+
+    /* Hiệu ứng nảy xanh khi đúng */
+    .correct-anim {
+      animation: popGreen 0.6s ease-out both;
+      border-color: var(--green) !important;
+    }
+    @keyframes popGreen {
+      0% { transform: scale(1); box-shadow: 0 0 0 rgba(166, 227, 161, 0); }
+      40% { transform: scale(1.02); box-shadow: 0 0 25px rgba(166, 227, 161, 0.4); }
+      100% { transform: scale(1); }
+    }
+
     .prompt-label {
       font-size: 0.8rem;
       color: var(--dim);
@@ -112,6 +138,7 @@
       background: rgba(137, 180, 250, 0.1);
       border-radius: 4px;
     }
+
     .input-group {
       margin-top: auto;
       display: flex;
@@ -129,9 +156,8 @@
       outline: none;
       transition: border-color 0.2s;
     }
-    .text-input:focus {
-      border-color: var(--accent);
-    }
+    .text-input:focus { border-color: var(--accent); }
+
     .btn-action {
       background: var(--accent);
       color: #11111b;
@@ -141,29 +167,69 @@
       font-size: 1rem;
       font-weight: bold;
       cursor: pointer;
-      transition: opacity 0.15s;
     }
     .btn-action:active { opacity: 0.85; }
-    .feedback-box {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 8px;
+
+    /* Modal Chế Giễu */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
       display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 20px;
+      backdrop-filter: blur(3px);
+    }
+    .modal-box {
+      background: #181825;
+      border: 2px solid var(--red);
+      border-radius: 16px;
+      padding: 24px 20px;
+      text-align: center;
+      width: 100%;
+      max-width: 380px;
+      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .mock-title {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: var(--red);
+      margin-bottom: 8px;
+    }
+    .mock-desc {
       font-size: 0.95rem;
+      color: var(--dim);
+      margin-bottom: 16px;
       line-height: 1.5;
     }
-    .feedback-box.correct {
-      display: block;
-      background: var(--green-bg);
+    .answer-reveal {
+      background: #11111b;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px dashed var(--border);
       color: var(--green);
-      border: 1px solid var(--green);
+      font-weight: bold;
+      margin-bottom: 20px;
+      word-break: break-word;
     }
-    .feedback-box.wrong {
-      display: block;
-      background: var(--red-bg);
-      color: var(--red);
-      border: 1px solid var(--red);
+    .btn-retry {
+      background: var(--red);
+      color: #11111b;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      width: 100%;
+      cursor: pointer;
     }
+
     .tab-nav {
       display: flex;
       gap: 10px;
@@ -197,13 +263,13 @@
 
   <header>
     <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent);" id="titleDay">Ngày 1</div>
-    <div class="streak" id="scoreDisplay">Điểm: 0</div>
+    <div class="streak" id="scoreDisplay">Chuỗi đúng: 0</div>
   </header>
 
   <div class="day-slider" id="dayBar"></div>
 
   <div class="tab-nav">
-    <button class="mode-btn active" id="btnGame" onclick="switchView('game')">Luyện Gõ Từ Thiếu</button>
+    <button class="mode-btn active" id="btnGame" onclick="switchView('game')">Luyện Gõ Nghiêm Ngặt</button>
     <button class="mode-btn" id="btnRead" onclick="switchView('read')">Đọc Bản Văn Gốc</button>
   </div>
 
@@ -211,37 +277,42 @@
     <div class="progress-bar" id="progressBar"></div>
   </div>
 
-  <!-- Khu vực gõ phím -->
   <div class="game-box" id="gameArea">
     <div>
       <div class="prompt-label">
-        <span>Gõ cụm từ còn thiếu</span>
+        <span>Gõ chính xác tuyệt đối (hoa/thường/dấu)</span>
         <span id="wordCountHint" style="color: var(--accent);"></span>
       </div>
       <div class="sentence-display" id="sentenceBox">...</div>
     </div>
 
-    <div>
-      <div class="input-group">
-        <input 
-          type="text" 
-          id="userInput" 
-          class="text-input" 
-          placeholder="Nhập chính xác cụm từ..." 
-          autocomplete="off" 
-          autocapitalize="none" 
-          spellcheck="false"
-        >
-        <button class="btn-action" id="btnSubmit" onclick="handleSubmit()">Kiểm Tra</button>
-      </div>
-
-      <div class="feedback-box" id="feedback"></div>
+    <div class="input-group">
+      <input 
+        type="text" 
+        id="userInput" 
+        class="text-input" 
+        placeholder="Gõ chuẩn từng ký tự..." 
+        autocomplete="off" 
+        autocorrect="off"
+        autocapitalize="none" 
+        spellcheck="false"
+      >
+      <button class="btn-action" id="btnSubmit" onclick="checkAnswer()">Kiểm Tra</button>
     </div>
   </div>
 
-  <!-- Khu vực đọc bản văn -->
   <div class="game-box" id="readArea" style="display: none;">
     <div class="read-text" id="fullVerseText"></div>
+  </div>
+
+  <!-- Popup Chế Giễu -->
+  <div class="modal-overlay" id="mockModal">
+    <div class="modal-box">
+      <div class="mock-title" id="mockTitleText">Sai rồi ní ơi! 🤪</div>
+      <div class="mock-desc">Nhìn lại cho kỹ từng chữ hoa chữ thường với dấu câu nha:</div>
+      <div class="answer-reveal" id="correctRevealText">...</div>
+      <button class="btn-retry" onclick="closeModalAndRetry()">Gõ lại cho nhớ</button>
+    </div>
   </div>
 
   <script>
@@ -262,11 +333,21 @@
       { day: 14, range: "Tổng duyệt 23 câu", text: "1 Khi Đức Chúa Jêsus đã sanh tại thành Bết-lê-hem, xứ Giu-đê, đang đời vua Hê-rốt.\n8 đặng ta cũng đến mà thờ lạy Ngài.\n14 Giô-sép bèn chờ dậy, đem con trẻ và mẹ Ngài đi ban đêm, lánh qua xứ Ê-díp-tô.\n23 đến ngụ tại một thành gọi là Na-xa-rét." }
     ];
 
+    const mockPhrases = [
+      "Sai rồi ní ơi! 🤦‍♂️",
+      "Hổng đúng rồi bạn! 😜",
+      "Lêu lêu trật lất! 🤪",
+      "Hehe làm lại đi ní! 🙃",
+      "Sai một ly đi một dặm nha ní! 😂",
+      "Nhìn lại dấu câu kìa bạn ơi! 🧐",
+      "Gõ ẩu là ăn hành nha ní! 🌶️"
+    ];
+
     let activeDay = 0;
     let questions = [];
     let qIndex = 0;
-    let score = 0;
-    let isAnswered = false;
+    let streakCount = 0;
+    let isTransitioning = false;
 
     function initDays() {
       const bar = document.getElementById('dayBar');
@@ -287,24 +368,21 @@
       document.getElementById('fullVerseText').textContent = bibleVerses[idx].text;
       buildQuestions();
       qIndex = 0;
+      streakCount = 0;
+      updateStreak();
       loadQuestion();
     }
 
-    // Thuật toán tách cụm 2 hoặc 3 từ liên tiếp
     function buildQuestions() {
       questions = [];
       const lines = bibleVerses[activeDay].text.split('\n');
 
       lines.forEach(line => {
-        // Tách câu thành các từ có kèm dấu câu
         const words = line.trim().split(/\s+/);
         if (words.length < 4) return;
-
-        // Bỏ qua từ đầu tiên nếu là số thứ tự câu (1, 2, 3...)
         let startIdx = /^\d+$/.test(words[0]) ? 1 : 0;
 
-        for (let i = startIdx; i < words.length - 2; i += 3) {
-          // Ngẫu nhiên chọn cụm 2 hoặc 3 từ
+        for (let i = startIdx; i < words.length - 1; i += 3) {
           const phraseLength = Math.min((Math.random() < 0.5 ? 2 : 3), words.length - i);
           const targetWords = words.slice(i, i + phraseLength);
           const targetPhrase = targetWords.join(' ');
@@ -321,27 +399,21 @@
         }
       });
 
-      // Trộn ngẫu nhiên câu hỏi
       questions = questions.sort(() => Math.random() - 0.5).slice(0, 10);
     }
 
     function loadQuestion() {
-      isAnswered = false;
-      const feedback = document.getElementById('feedback');
-      feedback.className = 'feedback-box';
-      feedback.style.display = 'none';
+      isTransitioning = false;
+      const gameArea = document.getElementById('gameArea');
+      gameArea.classList.remove('correct-anim', 'shake-anim');
 
       const input = document.getElementById('userInput');
       input.value = '';
       input.disabled = false;
-      input.focus();
-
-      const btn = document.getElementById('btnSubmit');
-      btn.textContent = "Kiểm Tra";
-      btn.style.background = "var(--accent)";
+      setTimeout(() => input.focus(), 50);
 
       if (questions.length === 0) {
-        document.getElementById('sentenceBox').textContent = "Không đủ dữ liệu tạo câu hỏi.";
+        document.getElementById('sentenceBox').textContent = "Không đủ dữ liệu câu hỏi.";
         return;
       }
 
@@ -353,71 +425,77 @@
       document.getElementById('sentenceBox').innerHTML = `${q.before} <span class="blank" id="blankSlot">.....</span> ${q.after}`;
     }
 
-    // Làm sạch chuỗi trước khi so sánh (chuẩn hóa khoảng trắng, chữ thường)
-    function cleanStr(s) {
-      return s.trim().toLowerCase().replace(/\s+/g, ' ');
-    }
-
-    function handleSubmit() {
-      if (!isAnswered) {
-        checkAnswer();
-      } else {
-        nextQuestion();
-      }
+    function updateStreak() {
+      document.getElementById('scoreDisplay').textContent = `Chuỗi đúng: ${streakCount}`;
     }
 
     function checkAnswer() {
+      if (isTransitioning) return;
+
       const input = document.getElementById('userInput');
-      const val = input.value;
+      const entered = input.value.trim();
       const q = questions[qIndex];
+      const gameArea = document.getElementById('gameArea');
 
-      if (!val.trim()) return;
+      if (!entered) return;
 
-      isAnswered = true;
-      input.disabled = true;
+      // So khớp tuyệt đối 100%: phân biệt hoa thường, dấu câu, khoảng trắng nội tại
+      if (entered === q.target) {
+        // XỬ LÝ KHI ĐÚNG
+        isTransitioning = true;
+        input.disabled = true;
+        streakCount++;
+        updateStreak();
 
-      const blank = document.getElementById('blankSlot');
-      blank.textContent = q.target;
+        // Hiệu ứng rung nhẹ trên điện thoại
+        if (navigator.vibrate) navigator.vibrate(60);
 
-      const feedback = document.getElementById('feedback');
-      const btn = document.getElementById('btnSubmit');
-
-      // So khớp không phân biệt hoa thường, nhưng giữ nguyên so khớp dấu câu
-      const isRight = cleanStr(val) === cleanStr(q.target);
-
-      if (isRight) {
-        score += 10;
-        feedback.className = 'feedback-box correct';
-        feedback.innerHTML = `<b>Chính xác! ✓</b>`;
+        gameArea.classList.add('correct-anim');
+        const blank = document.getElementById('blankSlot');
+        blank.textContent = q.target;
         blank.style.color = 'var(--green)';
-      } else {
-        feedback.className = 'feedback-box wrong';
-        feedback.innerHTML = `<b>Chưa đúng!</b><br>Đáp án chuẩn: <b>${q.target}</b>`;
-        blank.style.color = 'var(--red)';
-      }
 
-      document.getElementById('scoreDisplay').textContent = `Điểm: ${score}`;
-      btn.textContent = "Tiếp tục ➔";
-      btn.style.background = "#cdd6f4";
+        // Tự động nhảy sang câu tiếp theo sau 800ms
+        setTimeout(() => {
+          qIndex++;
+          if (qIndex >= questions.length) {
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('sentenceBox').innerHTML = `<div style="text-align:center; color:var(--green); font-weight:bold; font-size:1.3rem;">🎉 Xuất sắc! Bạn đã vượt qua bài test hôm nay!</div>`;
+            document.getElementById('wordCountHint').textContent = '';
+            document.querySelector('.input-group').style.display = 'none';
+          } else {
+            loadQuestion();
+          }
+        }, 850);
+
+      } else {
+        // XỬ LÝ KHI SAI
+        streakCount = 0;
+        updateStreak();
+
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+        gameArea.classList.add('shake-anim');
+        setTimeout(() => gameArea.classList.remove('shake-anim'), 450);
+
+        // Bật Modal Chế Giễu
+        const randMock = mockPhrases[Math.floor(Math.random() * mockPhrases.length)];
+        document.getElementById('mockTitleText').textContent = randMock;
+        document.getElementById('correctRevealText').textContent = q.target;
+        document.getElementById('mockModal').style.display = 'flex';
+      }
     }
 
-    function nextQuestion() {
-      qIndex++;
-      if (qIndex >= questions.length) {
-        document.getElementById('progressBar').style.width = '100%';
-        document.getElementById('sentenceBox').innerHTML = `<div style="text-align:center; color:var(--green); font-weight:bold; font-size:1.2rem;">🎉 Bạn đã hoàn thành phiên học hôm nay!</div>`;
-        document.getElementById('wordCountHint').textContent = '';
-        document.querySelector('.input-group').style.display = 'none';
-        document.getElementById('feedback').style.display = 'none';
-      } else {
-        loadQuestion();
-      }
+    function closeModalAndRetry() {
+      document.getElementById('mockModal').style.display = 'none';
+      const input = document.getElementById('userInput');
+      input.value = '';
+      input.focus();
     }
 
-    // Bắt phím Enter trên bàn phím điện thoại/máy tính
     document.getElementById('userInput').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
-        handleSubmit();
+        checkAnswer();
       }
     });
 
